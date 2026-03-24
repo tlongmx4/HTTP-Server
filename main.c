@@ -6,6 +6,49 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+typedef void (*handler_func)(int client_fd);
+
+void server_index_page(int client_fd) {
+    const char *response = 
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/plain\r\n"
+        "Content-Length: 13\r\n"
+        "\r\n"
+        "Hello, World!";
+    write(client_fd, response, strlen(response));
+}
+
+void server_about_page(int client_fd) {
+    const char *response =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-TYPE: text/plain\r\n"
+        "Content-Length: 10\r\n"
+        "\r\n"
+        "About Page";
+    write(client_fd, response, strlen(response)); 
+}
+
+void server_404_page(int client_fd) {
+    const char *response =
+        "HTTP/1.1 404 NOT FOUND\r\n"
+        "Content-Type: text/plain\r\n"
+        "Content-Length: 9\r\n"
+        "\r\n"
+        "Not Found";
+    write(client_fd, response, strlen(response));
+}
+
+struct Route {
+    const char *path;
+    handler_func handler;
+};
+
+struct Route routes[] = {
+    {"/", server_index_page},
+    {"/about", server_about_page},
+    {NULL, NULL}
+};
+
 int main() {
     printf("Starting the server...\n");
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -40,14 +83,20 @@ int main() {
         read(client_fd, buffer, sizeof(buffer) - 1);
         printf("Received message: %s\n", buffer);
 
-        const char *response = 
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Type: text/plain\r\n"
-            "Content-Length: 13\r\n"
-            "\r\n"
-            "Hello, World!";
+        char method[8], path[256];
+        sscanf(buffer, "%s %s", method, path);
 
-        write(client_fd, response, strlen(response));
+        int matched = 0;
+        for (int i = 0; routes[i].path != NULL; i++) {
+            if (strcmp(path, routes[i].path) == 0) {
+                routes[i].handler(client_fd);
+                matched = 1;
+                break;
+            }
+        }
+        if (!matched) {
+            server_404_page(client_fd);
+        }
 
         close(client_fd);
     }
