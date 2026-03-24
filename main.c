@@ -21,11 +21,21 @@ void server_index_page(int client_fd) {
 void server_about_page(int client_fd) {
     const char *response =
         "HTTP/1.1 200 OK\r\n"
-        "Content-TYPE: text/plain\r\n"
+        "Content-Type: text/plain\r\n"
         "Content-Length: 10\r\n"
         "\r\n"
         "About Page";
     write(client_fd, response, strlen(response)); 
+}
+
+void server_contact_page(int client_fd) {
+    const char *response =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/plain\r\n"
+        "Content Length: 12\r\n"
+        "\r\n"
+        "Contact Page";
+    write(client_fd, response, strlen(response));
 }
 
 void server_404_page(int client_fd) {
@@ -46,6 +56,7 @@ struct Route {
 struct Route routes[] = {
     {"/", server_index_page},
     {"/about", server_about_page},
+    {"/contact", server_contact_page},
     {NULL, NULL}
 };
 
