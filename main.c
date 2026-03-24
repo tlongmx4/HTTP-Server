@@ -29,26 +29,29 @@ int main() {
 
     printf("Listening for incoming connections on port 8080...\n");
 
-    int client_fd = accept(server_fd, NULL, NULL);
-    if (client_fd < 0) {
-        fprintf(stderr, "Failed to accept connection.\n");
-        return EXIT_FAILURE;
+    while (1) {
+        int client_fd = accept(server_fd, NULL, NULL);
+        if (client_fd < 0) {
+            fprintf(stderr, "Failed to accept connection.\n");
+            continue;
+        }
+
+        char buffer[1024] = {0};
+        read(client_fd, buffer, sizeof(buffer) - 1);
+        printf("Received message: %s\n", buffer);
+
+        const char *response = 
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: text/plain\r\n"
+            "Content-Length: 13\r\n"
+            "\r\n"
+            "Hello, World!";
+
+        write(client_fd, response, strlen(response));
+
+        close(client_fd);
     }
 
-    char buffer[1024] = {0};
-    read(client_fd, buffer, sizeof(buffer));
-    printf("Received message: %s\n", buffer);
-
-    const char *response = 
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: text/plain\r\n"
-        "Content-Length: 13\r\n"
-        "\r\n"
-        "Hello, World!";
-
-    write(client_fd, response, strlen(response));
-
-    close(client_fd);
     close(server_fd);
     return EXIT_SUCCESS;
 }
